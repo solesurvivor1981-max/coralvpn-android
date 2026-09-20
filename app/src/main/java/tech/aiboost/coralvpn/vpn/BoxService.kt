@@ -25,6 +25,7 @@ class BoxService(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var commandServer: CommandServer? = null
+    private val logClient = CommandLogClient()
 
     fun start(configJson: String, onStarted: () -> Unit, onError: (String) -> Unit) {
         scope.launch {
@@ -44,6 +45,7 @@ class BoxService(
 
                 server.startOrReloadService(configJson, OverrideOptions())
                 LogStore.log("box: startOrReloadService returned OK")
+                logClient.start() // subscribe to core log+status to capture the real drop reason
                 onStarted()
             } catch (e: Exception) {
                 Log.e(TAG, "start failed", e)
@@ -57,6 +59,7 @@ class BoxService(
         scope.launch {
             val server = commandServer ?: return@launch
             LogStore.log("box: closeService()")
+            runCatching { logClient.stop() }
             runCatching { server.closeService() }
                 .onFailure {
                     LogStore.log("box: closeService error: ${it.message}")
@@ -70,6 +73,7 @@ class BoxService(
     }
 
     fun onDestroy() {
+        logClient.onDestroy()
         scope.cancel()
     }
 
