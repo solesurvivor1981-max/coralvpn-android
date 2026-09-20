@@ -8,8 +8,29 @@
 | Workflow | Когда | Что делает |
 |---|---|---|
 | `.github/workflows/android.yml` | push в main / PR | качает `libbox.aar` из релиза → юнит-тесты → debug APK (артефакт) |
+| `.github/workflows/release.yml` | тег `v*` / вручную | **подписанный** release APK → прикладывает к GitHub Release |
+| `.github/workflows/gen-keystore.yml` | вручную (однократно) | генерит постоянный keystore подписи (см. «Подпись») |
 | `.github/workflows/build-libbox.yml` | вручную | полное ядро (все протоколы) через `build_libbox`, 4 ABI |
 | `.github/workflows/build-libbox-slim.yml` | вручную | **slim hy2-only** ядро (только нужные теги), arm64, stripped |
+
+Текущий релиз ядра, который качает CI: **`libbox-v1.14.1`** (стабильная sing-box 1.14.1 —
+совпадает с версией, под которую сервер валидирует конфиг). Не alpha.
+
+## Подпись (release)
+
+Ключ подписи — постоянный (менять нельзя, иначе обновления не встанут поверх). Хранится в
+GitHub Secrets: `ANDROID_KEYSTORE_B64`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_PASSWORD`,
+`ANDROID_KEY_ALIAS`. `release.yml` декодит keystore и собирает подписанный APK. Gradle берёт
+ключ из env (`KEYSTORE_FILE/KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD`).
+**Важно (PKCS12):** store- и key-пароль ДОЛЖНЫ совпадать.
+
+Выпуск: `gh release create vX.Y.Z ...` (создаёт тег) → `release.yml` собирает и прикладывает APK.
+
+## Дистрибуция
+
+Репозиторий приватный → GitHub Release не скачать без логина. APK раздаётся с нашего сайта:
+кладём подписанный `coralvpn-latest.apk` на сервер (Content-Type
+`application/vnd.android.package-archive`), кнопка в боте ведёт на постоянный URL.
 
 ## Как устроено ядро (libbox)
 
