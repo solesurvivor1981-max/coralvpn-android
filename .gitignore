@@ -1,0 +1,33 @@
+# Gradle / Android
+.gradle/
+build/
+*/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Keystore / secrets (never commit signing material)
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+release.env
+
+# libbox artifacts (built in CI via gomobile)
+libbox.aar
+*/libs/*.aar
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+local.env
+
+# Go / gomobile scratch
+.gomobile/
