@@ -1,11 +1,9 @@
 package tech.aiboost.coralvpn
 
 import android.app.Application
-import android.os.Build
 import android.util.Log
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.SetupOptions
-import org.json.JSONObject
 import tech.aiboost.coralvpn.vpn.DefaultNetworkMonitor
 import tech.aiboost.coralvpn.vpn.LogStore
 import java.util.Locale
@@ -42,12 +40,6 @@ class CoralApp : Application() {
             it.oomKillerDisabled = false
             it.oomMemoryLimit = 0L
             it.powerReportEnabled = false
-            it.platformMetadata = JSONObject().apply {
-                put("os", "Android " + Build.VERSION.RELEASE)
-                put("sdk", Build.VERSION.SDK_INT)
-                put("manufacturer", Build.MANUFACTURER)
-                put("model", Build.MODEL)
-            }.toString()
         }
         runCatching { Libbox.setup(options) }
             .onFailure { Log.e(TAG, "libbox setup failed", it) }

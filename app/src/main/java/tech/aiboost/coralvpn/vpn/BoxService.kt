@@ -30,9 +30,8 @@ class BoxService(
     fun start(configJson: String, onStarted: () -> Unit, onError: (String) -> Unit) {
         scope.launch {
             try {
-                LogStore.log("box: promote/discard drafts")
+                LogStore.log("box: promote OOM draft")
                 Libbox.promoteOOMDraft()
-                Libbox.discardPowerReportDraft()
 
                 LogStore.log("box: creating CommandServer")
                 val server = CommandServer(this@BoxService, platformInterface)

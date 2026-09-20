@@ -15,8 +15,6 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import io.nekohasekai.libbox.AutoRedirectHandler
-import io.nekohasekai.libbox.AutoRedirectSession
 import io.nekohasekai.libbox.BridgeOptions
 import io.nekohasekai.libbox.BridgeSession
 import io.nekohasekai.libbox.ConnectionOwner
@@ -237,11 +235,6 @@ class CoralVpnService : VpnService(), PlatformInterface {
     override fun tailscaleHostname(): String = "${Build.MANUFACTURER} ${Build.MODEL}"
     override fun usePlatformBridge(): Boolean = false
     override fun createBridge(options: BridgeOptions?): BridgeSession = error("not supported")
-    override fun usePlatformAutoRedirect(): Boolean = false
-    override fun createAutoRedirect(
-        options: ByteArray?,
-        handler: AutoRedirectHandler?,
-    ): AutoRedirectSession = error("not supported")
 
     override fun sendNotification(notification: LibboxNotification?) {}
     override fun cancelNotification(identifier: String?, typeID: Int) {}
