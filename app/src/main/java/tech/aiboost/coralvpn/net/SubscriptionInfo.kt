@@ -20,9 +20,14 @@ data class SubscriptionInfo(
     val usedBytes: Long?
         get() = if (upload != null || download != null) (upload ?: 0L) + (download ?: 0L) else null
 
+    /** Server sends total=0 for an unlimited plan. */
+    val isUnlimited: Boolean
+        get() = (total ?: 0L) <= 0L
+
     val remainingBytes: Long?
         get() {
             val t = total ?: return null
+            if (t <= 0L) return null // unlimited
             val used = usedBytes ?: 0L
             return (t - used).coerceAtLeast(0L)
         }

@@ -16,8 +16,11 @@
     <string name="no_link">Ссылка подписки не добавлена</string>
 
     <string name="traffic_remaining">Осталось трафика: %1$s</string>
+    <string name="traffic_used">Использовано: %1$s</string>
+    <string name="traffic_unlimited">Трафик: безлимит</string>
     <string name="expires_at">Действует до: %1$s</string>
     <string name="current_server">Сервер: %1$s</string>
+    <string name="open_bot">Telegram-бот</string>
 
     <string name="notif_channel_name">Статус VPN</string>
     <string name="notif_connected">CoralVPN подключён</string>

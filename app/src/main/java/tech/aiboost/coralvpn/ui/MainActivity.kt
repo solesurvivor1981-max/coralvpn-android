@@ -56,11 +56,11 @@ class MainActivity : AppCompatActivity() {
         binding.saveLinkButton.setOnClickListener { onSaveLink() }
         binding.connectButton.setOnClickListener { onConnectToggle() }
         binding.renewButton.setOnClickListener { openBot() }
-        binding.shareLogButton.setOnClickListener { shareLog() }
-        binding.clearLogButton.setOnClickListener { LogStore.clear() }
+        binding.botButton.setOnClickListener { openBot() }
+        // Hidden support hook: long-press the logo to share the diagnostic log.
+        binding.logo.setOnLongClickListener { shareLog(); true }
 
         observeVpnState()
-        observeLog()
         maybeRequestNotificationPermission()
         handleDeeplink(intent)
         render()
@@ -186,14 +186,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun observeLog() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                LogStore.text.collect { binding.logText.text = it }
-            }
-        }
-    }
-
     private fun shareLog() {
         val log = LogStore.snapshot().ifBlank { "(лог пуст)" }
         val share = Intent(Intent.ACTION_SEND).apply {
@@ -208,13 +200,19 @@ class MainActivity : AppCompatActivity() {
         val hasSub = store.hasSubscription
         binding.linkInputGroup.visibility = if (hasSub) android.view.View.GONE else android.view.View.VISIBLE
         binding.connectGroup.visibility = if (hasSub) android.view.View.VISIBLE else android.view.View.GONE
-        binding.diagGroup.visibility = if (hasSub) android.view.View.VISIBLE else android.view.View.GONE
 
         val info = store.loadInfo()
         binding.expiredBanner.visibility = if (hasSub && info.isExpired) android.view.View.VISIBLE else android.view.View.GONE
         binding.serverText.text = info.profileTitle?.let { getString(R.string.current_server, it) } ?: ""
         binding.expiresText.text = getString(R.string.expires_at, Formats.date(info.expireEpochSeconds))
-        binding.trafficText.text = getString(R.string.traffic_remaining, Formats.bytes(info.remainingBytes))
+        binding.trafficText.text = when {
+            info.isUnlimited && info.usedBytes != null ->
+                getString(R.string.traffic_used, Formats.bytes(info.usedBytes))
+            info.isUnlimited -> getString(R.string.traffic_unlimited)
+            info.remainingBytes != null ->
+                getString(R.string.traffic_remaining, Formats.bytes(info.remainingBytes))
+            else -> ""
+        }
         renderVpnState()
     }
 
