@@ -6,6 +6,7 @@ import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.SetupOptions
 import tech.aiboost.coralvpn.vpn.DefaultNetworkMonitor
 import tech.aiboost.coralvpn.vpn.LogStore
+import java.io.File
 import java.util.Locale
 
 /**
@@ -44,7 +45,30 @@ class CoralApp : Application() {
         runCatching { Libbox.setup(options) }
             .onFailure { Log.e(TAG, "libbox setup failed", it) }
 
+        surfaceCoreCrash(baseDir)
+
         DefaultNetworkMonitor.init(applicationContext)
+    }
+
+    /**
+     * Native Go panics inside the core don't reach the JVM crash handler — libbox redirects
+     * them to workingPath/CrashReport-<source>.log and archives them under crash_reports/ on
+     * the next Libbox.setup(). Surface the latest so the panic+stack is visible without adb.
+     */
+    private fun surfaceCoreCrash(workingDir: File) {
+        runCatching {
+            val live = File(workingDir, "CrashReport-CoralVPN.log")
+            if (live.exists() && live.length() > 0) {
+                LogStore.log("═══ CORE CRASH (live) ═══\n" + live.readText().take(4000))
+            }
+            val reports = File(workingDir, "crash_reports")
+            if (reports.isDirectory) {
+                reports.walkTopDown()
+                    .filter { it.isFile && (it.name == "go.log" || it.name.endsWith(".log")) }
+                    .maxByOrNull { it.lastModified() }
+                    ?.let { LogStore.log("═══ CORE CRASH (${it.parentFile?.name}) ═══\n" + it.readText().take(4000)) }
+            }
+        }
     }
 
     /** Persist JVM crashes to the diagnostic log so the reason survives the process death. */
