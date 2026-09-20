@@ -14,6 +14,9 @@ on:
       tags:
         description: go build tags
         default: with_quic,with_gvisor,with_utls,badlinkname,tfogo_checklinkname0
+      platform:
+        description: gomobile target platform(s)
+        default: android/arm64
 
 permissions:
   contents: read
@@ -65,7 +68,7 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: |
           gomobile bind -v \
-            -target android/arm64 \
+            -target ${{ inputs.platform }} \
             -androidapi 24 \
             -javapkg=io.nekohasekai \
             -libname=box \
