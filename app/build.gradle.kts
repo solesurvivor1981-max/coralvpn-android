@@ -14,8 +14,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         vectorDrawables { useSupportLibrary = true }
-        // libbox.aar is built arm64-only (see build-libbox.yml); match it.
-        ndk { abiFilters += "arm64-v8a" }
+        // libbox.aar ships arm64-v8a + armeabi-v7a (universal; TV boxes are often 32-bit).
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     val keystorePath = System.getenv("KEYSTORE_FILE")
