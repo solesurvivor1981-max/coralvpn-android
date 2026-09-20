@@ -1,0 +1,81 @@
+name: Release
+
+# Builds a SIGNED release APK and attaches it to the GitHub release for the pushed tag.
+# Signing key comes from repo secrets (see gen-keystore.yml).
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch prebuilt libbox.aar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p app/libs
+          gh release download libbox-v1.14.1 \
+            --repo "${{ github.repository }}" \
+            --pattern libbox.aar \
+            --dir app/libs
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
+      - name: Install SDK packages
+        run: |
+          yes | sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+
+      - name: Decode keystore
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease --stacktrace --no-daemon
+
+      - name: Stage APK
+        run: |
+          mkdir -p out
+          TAG="${GITHUB_REF_NAME:-dev}"
+          cp app/build/outputs/apk/release/*.apk "out/coralvpn-${TAG}.apk"
+          ls -la out
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coralvpn-release-apk
+          path: out/*.apk
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" --title "CoralVPN ${GITHUB_REF_NAME}" --notes "Signed release."
+          gh release upload "${GITHUB_REF_NAME}" out/*.apk --clobber
