@@ -25,7 +25,6 @@ class BoxService(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var commandServer: CommandServer? = null
-    private val logClient = CommandLogClient()
 
     fun start(configJson: String, onStarted: () -> Unit, onError: (String) -> Unit) {
         scope.launch {
@@ -40,12 +39,7 @@ class BoxService(
                 LogStore.log("box: CommandServer started")
 
                 DefaultNetworkMonitor.start()
-
-                // Connect the log client BEFORE startOrReloadService: the service start can
-                // crash natively (before it returns), so we must be subscribed to catch the
-                // core log lines / panic reason emitted DURING startup.
-                logClient.start()
-                LogStore.log("box: network monitor + log client started; starting service…")
+                LogStore.log("box: network monitor started; starting service…")
 
                 server.startOrReloadService(configJson, OverrideOptions())
                 LogStore.log("box: startOrReloadService returned OK")
@@ -62,7 +56,6 @@ class BoxService(
         scope.launch {
             val server = commandServer ?: return@launch
             LogStore.log("box: closeService()")
-            runCatching { logClient.stop() }
             runCatching { server.closeService() }
                 .onFailure {
                     LogStore.log("box: closeService error: ${it.message}")
@@ -76,7 +69,6 @@ class BoxService(
     }
 
     fun onDestroy() {
-        logClient.onDestroy()
         scope.cancel()
     }
 
