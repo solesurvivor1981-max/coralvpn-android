@@ -1,0 +1,85 @@
+name: Build libbox.aar (slim, hy2-only)
+
+# Builds a slim libbox AAR with ONLY the tags CoralVPN needs (Hysteria2 = QUIC),
+# stripped, arm64-only — much smaller than the full build_libbox output.
+# The linkname tags (badlinkname, tfogo_checklinkname0) are required to compile
+# sing-box with recent Go.
+
+on:
+  workflow_dispatch:
+    inputs:
+      singbox_ref:
+        description: sing-box git ref
+        default: v1.15.0-alpha.6
+      tags:
+        description: go build tags
+        default: with_quic,with_gvisor,with_utls,badlinkname,tfogo_checklinkname0
+
+permissions:
+  contents: read
+
+jobs:
+  libbox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sing-box
+        uses: actions/checkout@v4
+        with:
+          repository: SagerNet/sing-box
+          ref: ${{ inputs.singbox_ref }}
+          path: sing-box
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.8'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
+      - name: Set up NDK r28
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r28
+
+      - name: Install gomobile (sagernet fork)
+        working-directory: sing-box
+        run: |
+          go install -v github.com/sagernet/gomobile/cmd/gomobile@v0.1.13
+          go install -v github.com/sagernet/gomobile/cmd/gobind@v0.1.13
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build slim libbox.aar
+        working-directory: sing-box
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          gomobile bind -v \
+            -target android/arm64 \
+            -androidapi 24 \
+            -javapkg=io.nekohasekai \
+            -libname=box \
+            -trimpath -buildvcs=false \
+            -ldflags "-s -w" \
+            -tags "${{ inputs.tags }}" \
+            -o libbox.aar \
+            ./experimental/libbox
+          ls -la libbox.aar
+          echo "size: $(du -h libbox.aar | cut -f1)"
+
+      - name: Upload slim libbox.aar
+        uses: actions/upload-artifact@v4
+        with:
+          name: libbox-aar-slim
+          path: sing-box/libbox.aar
+          if-no-files-found: error
