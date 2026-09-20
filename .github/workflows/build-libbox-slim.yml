@@ -70,7 +70,7 @@ jobs:
             -javapkg=io.nekohasekai \
             -libname=box \
             -trimpath -buildvcs=false \
-            -ldflags "-s -w" \
+            -ldflags "-s -w -checklinkname=0" \
             -tags "${{ inputs.tags }}" \
             -o libbox.aar \
             ./experimental/libbox
