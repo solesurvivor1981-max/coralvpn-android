@@ -21,6 +21,7 @@ import tech.aiboost.coralvpn.R
 import tech.aiboost.coralvpn.data.SubscriptionStore
 import tech.aiboost.coralvpn.databinding.ActivityMainBinding
 import tech.aiboost.coralvpn.net.ConfigClient
+import tech.aiboost.coralvpn.net.NotSingboxConfigException
 import tech.aiboost.coralvpn.net.SubscriptionInactiveException
 import tech.aiboost.coralvpn.util.Formats
 import tech.aiboost.coralvpn.vpn.CoralVpnService
@@ -119,6 +120,14 @@ class MainActivity : AppCompatActivity() {
                 store.lastRefreshEpochMs = System.currentTimeMillis()
             } catch (e: SubscriptionInactiveException) {
                 if (showToast) Toast.makeText(this@MainActivity, R.string.err_inactive, Toast.LENGTH_LONG).show()
+            } catch (e: NotSingboxConfigException) {
+                if (showToast) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        getString(R.string.err_format, e.classification),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
             } catch (e: Exception) {
                 if (showToast) Toast.makeText(this@MainActivity, R.string.err_network, Toast.LENGTH_LONG).show()
             } finally {
@@ -156,8 +165,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun startVpnService() {
         val configJson = store.cachedConfig
-        if (configJson.isNullOrBlank()) {
-            // No config cached yet — fetch, then the user can tap Connect again.
+        // Null, or a stale non-JSON body (e.g. an old hysteria2:// subscription cached
+        // before we forced fmt=singbox) — re-fetch instead of handing libbox garbage.
+        if (configJson.isNullOrBlank() || !configJson.trimStart().startsWith("{")) {
             refreshConfig(showToast = true)
             return
         }

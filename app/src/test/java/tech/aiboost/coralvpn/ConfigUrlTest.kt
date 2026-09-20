@@ -35,4 +35,20 @@ class ConfigUrlTest {
             ConfigClient.ensureSingboxFormat("  https://sub-ru.ai-boost.tech/sub/abc  "),
         )
     }
+
+    @Test
+    fun replacesConflictingFormat() {
+        assertEquals(
+            "https://sub-ru.ai-boost.tech/sub/abc?fmt=singbox",
+            ConfigClient.ensureSingboxFormat("https://sub-ru.ai-boost.tech/sub/abc?fmt=clash"),
+        )
+    }
+
+    @Test
+    fun keepsOtherParamsAndForcesSingbox() {
+        assertEquals(
+            "https://sub-ru.ai-boost.tech/sub/abc?token=1&fmt=singbox",
+            ConfigClient.ensureSingboxFormat("https://sub-ru.ai-boost.tech/sub/abc?token=1&fmt=v2ray"),
+        )
+    }
 }
