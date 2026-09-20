@@ -142,7 +142,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 val qr = withContext(Dispatchers.Default) { QrGen.bitmap(session.deepLink, 600) }
                 binding.qrImage.setImageBitmap(qr)
-                binding.pairCode.text = session.code?.let { "код: $it" } ?: ""
+                // Short-code entry in the bot isn't wired yet (server deviation #2) — hide it for now.
+                binding.pairCode.text = ""
 
                 val deadline = System.currentTimeMillis() + session.expiresInSec * 1000L
                 while (isActive && System.currentTimeMillis() < deadline) {

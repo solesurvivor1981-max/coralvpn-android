@@ -30,7 +30,7 @@
     <string name="change_link">Сменить ссылку</string>
     <string name="pair_device">Привязать по QR (ТВ / 2-й телефон)</string>
     <string name="pair_title">Привязка устройства</string>
-    <string name="pair_hint">Отсканируйте QR-код камерой телефона, где открыт наш бот. Или откройте бота и введите код.</string>
+    <string name="pair_hint">Отсканируйте QR-код камерой телефона — откроется наш бот и привяжет это устройство к вашей подписке.</string>
     <string name="pair_waiting">Ожидание подтверждения…</string>
     <string name="pair_expired">Код истёк. Обновите.</string>
     <string name="pair_refresh">Обновить код</string>
