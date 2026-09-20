@@ -44,6 +44,11 @@ android {
             excludes += "/META-INF/*.version"
             excludes += "/META-INF/*.kotlin_module"
         }
+        jniLibs {
+            // Compress the native core in the APK (~50MB .so -> a few MB) so the
+            // download fits distribution limits; extracted on install.
+            useLegacyPackaging = true
+        }
     }
 }
 
