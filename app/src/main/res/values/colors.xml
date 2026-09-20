@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="coral">#FF6F61</color>
+    <color name="coral_dark">#E24A3B</color>
+    <color name="connected">#2E7D32</color>
+    <color name="disconnected">#757575</color>
+    <color name="bg">#FFFBFA</color>
+    <color name="on_bg">#1B1B1B</color>
+    <color name="white">#FFFFFF</color>
+    <color name="warn_bg">#FFF3E0</color>
+    <color name="warn_fg">#B26A00</color>
+</resources>

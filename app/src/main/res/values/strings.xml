@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">CoralVPN</string>
+
+    <string name="connect">Подключить</string>
+    <string name="disconnect">Отключить</string>
+    <string name="connecting">Подключение…</string>
+    <string name="status_connected">Подключено</string>
+    <string name="status_disconnected">Отключено</string>
+
+    <string name="paste_link_title">Вставьте ссылку из бота</string>
+    <string name="paste_link_hint">https://sub-ru.ai-boost.tech/sub/…</string>
+    <string name="save_link">Сохранить</string>
+
+    <string name="subscription_expired">Подписка истекла</string>
+    <string name="renew_in_bot">Продлить в боте</string>
+    <string name="no_link">Ссылка подписки не добавлена</string>
+
+    <string name="traffic_remaining">Осталось трафика: %1$s</string>
+    <string name="expires_at">Действует до: %1$s</string>
+    <string name="current_server">Сервер: %1$s</string>
+
+    <string name="notif_channel_name">Статус VPN</string>
+    <string name="notif_connected">CoralVPN подключён</string>
+
+    <string name="err_inactive">Подписка не активна. Продлите в боте.</string>
+    <string name="err_network">Не удалось получить конфигурацию. Проверьте сеть.</string>
+</resources>
