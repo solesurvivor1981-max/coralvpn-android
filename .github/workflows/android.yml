@@ -24,7 +24,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p app/libs
-          gh release download libbox-v1.15.0-alpha.6 \
+          gh release download libbox-v1.14.1 \
             --repo "${{ github.repository }}" \
             --pattern libbox.aar \
             --dir app/libs
