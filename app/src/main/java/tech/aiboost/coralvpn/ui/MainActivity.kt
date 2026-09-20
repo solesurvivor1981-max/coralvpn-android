@@ -15,6 +15,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import tech.aiboost.coralvpn.R
@@ -23,11 +26,13 @@ import tech.aiboost.coralvpn.databinding.ActivityMainBinding
 import tech.aiboost.coralvpn.net.ConfigClient
 import tech.aiboost.coralvpn.net.ConfigParser
 import tech.aiboost.coralvpn.net.NotSingboxConfigException
+import tech.aiboost.coralvpn.net.PairClient
 import tech.aiboost.coralvpn.net.SubscriptionInactiveException
 import tech.aiboost.coralvpn.net.TrialClient
 import tech.aiboost.coralvpn.net.TrialServerException
 import tech.aiboost.coralvpn.net.TrialUsedException
 import tech.aiboost.coralvpn.util.Formats
+import tech.aiboost.coralvpn.util.QrGen
 import tech.aiboost.coralvpn.vpn.CoralVpnService
 import tech.aiboost.coralvpn.vpn.LogStore
 import tech.aiboost.coralvpn.vpn.OutboundSelector
@@ -40,6 +45,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var store: SubscriptionStore
     private val configClient = ConfigClient()
     private val trialClient = TrialClient()
+    private val pairClient = PairClient()
+    private var pairJob: Job? = null
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* best-effort */ }
@@ -60,6 +67,8 @@ class MainActivity : AppCompatActivity() {
         store = SubscriptionStore(this)
 
         binding.trialButton.setOnClickListener { onTrial() }
+        binding.pairButton.setOnClickListener { startPairing() }
+        binding.pairCancelButton.setOnClickListener { cancelPairing() }
         binding.saveLinkButton.setOnClickListener { onSaveLink() }
         binding.connectButton.setOnClickListener { onConnectToggle() }
         binding.renewButton.setOnClickListener { openBot() }
@@ -114,6 +123,59 @@ class MainActivity : AppCompatActivity() {
         store.subscriptionUrl = null
         store.cachedConfig = null
         store.selectedServer = null
+        render()
+    }
+
+    private fun startPairing() {
+        binding.linkInputGroup.visibility = android.view.View.GONE
+        binding.pairGroup.visibility = android.view.View.VISIBLE
+        binding.pairStatus.setText(R.string.pair_waiting)
+        binding.qrImage.setImageDrawable(null)
+        binding.pairCode.text = ""
+
+        pairJob?.cancel()
+        pairJob = lifecycleScope.launch {
+            try {
+                val kind = if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) "tv" else "phone"
+                val session = withContext(Dispatchers.IO) {
+                    pairClient.create(store.deviceId, kind, Build.MODEL)
+                }
+                val qr = withContext(Dispatchers.Default) { QrGen.bitmap(session.deepLink, 600) }
+                binding.qrImage.setImageBitmap(qr)
+                binding.pairCode.text = session.code?.let { "код: $it" } ?: ""
+
+                val deadline = System.currentTimeMillis() + session.expiresInSec * 1000L
+                while (isActive && System.currentTimeMillis() < deadline) {
+                    delay(session.pollIntervalSec.coerceAtLeast(1) * 1000L)
+                    val st = withContext(Dispatchers.IO) {
+                        runCatching { pairClient.status(session.token) }.getOrNull()
+                    }
+                    when (st) {
+                        is PairClient.Status.Ready -> {
+                            store.subscriptionUrl = st.subUrl
+                            binding.pairGroup.visibility = android.view.View.GONE
+                            refreshConfig(showToast = true)
+                            return@launch
+                        }
+                        PairClient.Status.Expired -> {
+                            binding.pairStatus.setText(R.string.pair_expired)
+                            return@launch
+                        }
+                        else -> { /* pending — keep polling */ }
+                    }
+                }
+                if (isActive) binding.pairStatus.setText(R.string.pair_expired)
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, R.string.err_network, Toast.LENGTH_LONG).show()
+                cancelPairing()
+            }
+        }
+    }
+
+    private fun cancelPairing() {
+        pairJob?.cancel()
+        pairJob = null
+        binding.pairGroup.visibility = android.view.View.GONE
         render()
     }
 
@@ -238,6 +300,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun render() {
+        // Don't disturb the pairing screen while it's active.
+        if (binding.pairGroup.visibility == android.view.View.VISIBLE) return
         val hasSub = store.hasSubscription
         binding.linkInputGroup.visibility = if (hasSub) android.view.View.GONE else android.view.View.VISIBLE
         binding.connectGroup.visibility = if (hasSub) android.view.View.VISIBLE else android.view.View.GONE
