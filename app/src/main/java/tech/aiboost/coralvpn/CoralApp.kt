@@ -7,6 +7,7 @@ import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.SetupOptions
 import org.json.JSONObject
 import tech.aiboost.coralvpn.vpn.DefaultNetworkMonitor
+import tech.aiboost.coralvpn.vpn.LogStore
 import java.util.Locale
 
 /**
@@ -17,6 +18,9 @@ class CoralApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        LogStore.init(this)
+        installCrashLogger()
 
         runCatching { Libbox.setLocale(Locale.getDefault().toLanguageTag()) }
             .onFailure { Log.d(TAG, "setLocale: ${it.message}") }
@@ -49,6 +53,19 @@ class CoralApp : Application() {
             .onFailure { Log.e(TAG, "libbox setup failed", it) }
 
         DefaultNetworkMonitor.init(applicationContext)
+    }
+
+    /** Persist JVM crashes to the diagnostic log so the reason survives the process death. */
+    private fun installCrashLogger() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            runCatching {
+                val sw = java.io.StringWriter()
+                throwable.printStackTrace(java.io.PrintWriter(sw))
+                LogStore.log("FATAL on ${thread.name}: ${sw.toString().take(2000)}")
+            }
+            previous?.uncaughtException(thread, throwable)
+        }
     }
 
     companion object {
