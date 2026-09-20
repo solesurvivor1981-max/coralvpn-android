@@ -1,0 +1,74 @@
+name: Build libbox.aar
+
+# Isolated workflow to build the sing-box libbox AAR on Actions and verify the
+# Go/gomobile/NDK toolchain. Run manually; the resulting artifact is consumed by
+# the app build (milestone 2b). Pinned to the sing-box tag matching SFA dev.
+
+on:
+  workflow_dispatch:
+    inputs:
+      singbox_ref:
+        description: sing-box git ref to build libbox from
+        default: v1.15.0-alpha.6
+      platform:
+        description: gomobile target platform
+        default: android/arm64
+
+permissions:
+  contents: read
+
+jobs:
+  libbox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sing-box
+        uses: actions/checkout@v4
+        with:
+          repository: SagerNet/sing-box
+          ref: ${{ inputs.singbox_ref }}
+          path: sing-box
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.8'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
+      - name: Set up NDK r28
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r28
+
+      - name: Install gomobile (sagernet fork)
+        working-directory: sing-box
+        run: |
+          go install -v github.com/sagernet/gomobile/cmd/gomobile@v0.1.13
+          go install -v github.com/sagernet/gomobile/cmd/gobind@v0.1.13
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build libbox.aar
+        working-directory: sing-box
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          go run ./cmd/internal/build_libbox -target android -platform ${{ inputs.platform }}
+          ls -la libbox*.aar
+
+      - name: Upload libbox.aar
+        uses: actions/upload-artifact@v4
+        with:
+          name: libbox-aar
+          path: sing-box/libbox*.aar
+          if-no-files-found: error
