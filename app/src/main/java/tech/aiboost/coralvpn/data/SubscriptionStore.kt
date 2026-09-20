@@ -38,6 +38,11 @@ class SubscriptionStore(context: Context) {
         get() = prefs.getLong(KEY_LAST_REFRESH, 0L)
         set(value) = prefs.edit().putLong(KEY_LAST_REFRESH, value).apply()
 
+    /** User-picked server tag within the CORALVPN selector (null = use config default). */
+    var selectedServer: String?
+        get() = prefs.getString(KEY_SELECTED_SERVER, null)
+        set(value) = prefs.edit().putString(KEY_SELECTED_SERVER, value).apply()
+
     val hasSubscription: Boolean
         get() = !subscriptionUrl.isNullOrBlank()
 
@@ -73,6 +78,7 @@ class SubscriptionStore(context: Context) {
         private const val KEY_URL = "sub_url"
         private const val KEY_CONFIG = "config_json"
         private const val KEY_LAST_REFRESH = "last_refresh_ms"
+        private const val KEY_SELECTED_SERVER = "selected_server"
         private const val KEY_TITLE = "info_title"
         private const val KEY_SUPPORT_URL = "info_support_url"
         private const val KEY_INTERVAL = "info_interval_h"

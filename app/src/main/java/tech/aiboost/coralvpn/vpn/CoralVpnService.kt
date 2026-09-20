@@ -54,6 +54,7 @@ class CoralVpnService : VpnService(), PlatformInterface {
             else -> {
                 val configJson = intent?.getStringExtra(EXTRA_CONFIG_JSON)
                 val serverName = intent?.getStringExtra(EXTRA_SERVER_NAME)
+                val serverTag = intent?.getStringExtra(EXTRA_SERVER_TAG)
                 if (configJson.isNullOrBlank()) {
                     Log.e(TAG, "empty config")
                     VpnController.update(VpnState(VpnStatus.ERROR, message = "empty config"))
@@ -73,6 +74,9 @@ class CoralVpnService : VpnService(), PlatformInterface {
                 box.start(
                     configJson,
                     onStarted = {
+                        if (!serverTag.isNullOrBlank()) {
+                            OutboundSelector.select(tech.aiboost.coralvpn.net.ConfigParser.GROUP_TAG, serverTag)
+                        }
                         VpnController.update(VpnState(VpnStatus.CONNECTED, serverName))
                         updateNotification(serverName, getString(R.string.status_connected))
                     },
@@ -295,15 +299,22 @@ class CoralVpnService : VpnService(), PlatformInterface {
         const val ACTION_DISCONNECT = "tech.aiboost.coralvpn.DISCONNECT"
         const val EXTRA_CONFIG_JSON = "config_json"
         const val EXTRA_SERVER_NAME = "server_name"
+        const val EXTRA_SERVER_TAG = "server_tag"
 
         private const val CHANNEL_ID = "vpn_status"
         private const val NOTIFICATION_ID = 1
 
-        fun connectIntent(context: Context, configJson: String, serverName: String?): Intent =
+        fun connectIntent(
+            context: Context,
+            configJson: String,
+            serverName: String?,
+            serverTag: String?,
+        ): Intent =
             Intent(context, CoralVpnService::class.java)
                 .setAction(ACTION_CONNECT)
                 .putExtra(EXTRA_CONFIG_JSON, configJson)
                 .putExtra(EXTRA_SERVER_NAME, serverName)
+                .putExtra(EXTRA_SERVER_TAG, serverTag)
 
         fun disconnectIntent(context: Context): Intent =
             Intent(context, CoralVpnService::class.java).setAction(ACTION_DISCONNECT)

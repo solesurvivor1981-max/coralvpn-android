@@ -21,11 +21,13 @@ import tech.aiboost.coralvpn.R
 import tech.aiboost.coralvpn.data.SubscriptionStore
 import tech.aiboost.coralvpn.databinding.ActivityMainBinding
 import tech.aiboost.coralvpn.net.ConfigClient
+import tech.aiboost.coralvpn.net.ConfigParser
 import tech.aiboost.coralvpn.net.NotSingboxConfigException
 import tech.aiboost.coralvpn.net.SubscriptionInactiveException
 import tech.aiboost.coralvpn.util.Formats
 import tech.aiboost.coralvpn.vpn.CoralVpnService
 import tech.aiboost.coralvpn.vpn.LogStore
+import tech.aiboost.coralvpn.vpn.OutboundSelector
 import tech.aiboost.coralvpn.vpn.VpnController
 import tech.aiboost.coralvpn.vpn.VpnStatus
 
@@ -57,6 +59,7 @@ class MainActivity : AppCompatActivity() {
         binding.connectButton.setOnClickListener { onConnectToggle() }
         binding.renewButton.setOnClickListener { openBot() }
         binding.botButton.setOnClickListener { openBot() }
+        binding.serverText.setOnClickListener { showServerPicker() }
         // Hidden support hook: long-press the logo to share the diagnostic log.
         binding.logo.setOnLongClickListener { shareLog(); true }
 
@@ -174,7 +177,7 @@ class MainActivity : AppCompatActivity() {
         val serverName = store.loadInfo().profileTitle
         ContextCompat.startForegroundService(
             this,
-            CoralVpnService.connectIntent(this, configJson, serverName),
+            CoralVpnService.connectIntent(this, configJson, serverName, store.selectedServer),
         )
     }
 
@@ -204,6 +207,12 @@ class MainActivity : AppCompatActivity() {
         val info = store.loadInfo()
         binding.expiredBanner.visibility = if (hasSub && info.isExpired) android.view.View.VISIBLE else android.view.View.GONE
         binding.serverText.text = info.profileTitle?.let { getString(R.string.current_server, it) } ?: ""
+        val servers = ConfigParser.parseServers(store.cachedConfig)
+        val canPick = servers != null && servers.tags.isNotEmpty()
+        val currentServer = store.selectedServer ?: servers?.default
+        val serverLabel = getString(R.string.current_server, currentServer ?: (info.profileTitle ?: "—"))
+        binding.serverText.text = if (canPick) "$serverLabel  ▾" else serverLabel
+        binding.serverText.isClickable = canPick
         binding.expiresText.text = getString(R.string.expires_at, Formats.date(info.expireEpochSeconds))
         binding.trafficText.text = when {
             info.isUnlimited && info.usedBytes != null ->
@@ -234,6 +243,29 @@ class MainActivity : AppCompatActivity() {
             VpnStatus.ERROR -> "Ошибка: ${state.message ?: "—"}"
             else -> getString(R.string.status_disconnected)
         }
+    }
+
+    private fun showServerPicker() {
+        val servers = ConfigParser.parseServers(store.cachedConfig) ?: return
+        if (servers.tags.isEmpty()) return
+        val items = servers.tags.toTypedArray()
+        val current = store.selectedServer ?: servers.default
+        val checked = items.indexOf(current)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.choose_server)
+            .setSingleChoiceItems(items, checked) { dialog, which ->
+                val tag = items[which]
+                store.selectedServer = tag
+                render()
+                if (VpnController.state.value.status == VpnStatus.CONNECTED) {
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        OutboundSelector.select(ConfigParser.GROUP_TAG, tag)
+                    }
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun openBot() {
