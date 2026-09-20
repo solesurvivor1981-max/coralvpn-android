@@ -7,9 +7,13 @@
     <string name="status_connected">Подключено</string>
     <string name="status_disconnected">Отключено</string>
 
+    <string name="try_free">Попробовать бесплатно</string>
+    <string name="or_paste_link">— или —</string>
     <string name="paste_link_title">Вставьте ссылку из бота</string>
     <string name="paste_link_hint">https://sub-ru.ai-boost.tech/sub/…</string>
     <string name="save_link">Сохранить</string>
+    <string name="trial_used">Пробный период уже использован. Оформите подписку в боте.</string>
+    <string name="trial_loading">Запрашиваю пробный доступ…</string>
 
     <string name="subscription_expired">Подписка истекла</string>
     <string name="renew_in_bot">Продлить в боте</string>

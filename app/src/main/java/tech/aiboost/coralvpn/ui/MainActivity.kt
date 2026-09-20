@@ -24,6 +24,8 @@ import tech.aiboost.coralvpn.net.ConfigClient
 import tech.aiboost.coralvpn.net.ConfigParser
 import tech.aiboost.coralvpn.net.NotSingboxConfigException
 import tech.aiboost.coralvpn.net.SubscriptionInactiveException
+import tech.aiboost.coralvpn.net.TrialClient
+import tech.aiboost.coralvpn.net.TrialUsedException
 import tech.aiboost.coralvpn.util.Formats
 import tech.aiboost.coralvpn.vpn.CoralVpnService
 import tech.aiboost.coralvpn.vpn.LogStore
@@ -36,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var store: SubscriptionStore
     private val configClient = ConfigClient()
+    private val trialClient = TrialClient()
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* best-effort */ }
@@ -55,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         store = SubscriptionStore(this)
 
+        binding.trialButton.setOnClickListener { onTrial() }
         binding.saveLinkButton.setOnClickListener { onSaveLink() }
         binding.connectButton.setOnClickListener { onConnectToggle() }
         binding.renewButton.setOnClickListener { openBot() }
@@ -97,6 +101,24 @@ class MainActivity : AppCompatActivity() {
         } ?: return
         binding.linkEditText.setText(url)
         saveAndFetch(url)
+    }
+
+    private fun onTrial() {
+        binding.trialButton.isEnabled = false
+        Toast.makeText(this, R.string.trial_loading, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            try {
+                val subUrl = withContext(Dispatchers.IO) { trialClient.requestTrial(store.deviceId) }
+                store.subscriptionUrl = subUrl
+                refreshConfig(showToast = true)
+            } catch (e: TrialUsedException) {
+                Toast.makeText(this@MainActivity, R.string.trial_used, Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, R.string.err_network, Toast.LENGTH_LONG).show()
+            } finally {
+                binding.trialButton.isEnabled = true
+            }
+        }
     }
 
     private fun onSaveLink() {

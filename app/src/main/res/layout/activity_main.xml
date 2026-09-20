@@ -64,6 +64,23 @@
             android:orientation="vertical"
             android:layout_marginTop="32dp">
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/trialButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/try_free"
+                android:textSize="16sp"
+                app:backgroundTint="@color/coral" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/or_paste_link"
+                android:textColor="@color/disconnected" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

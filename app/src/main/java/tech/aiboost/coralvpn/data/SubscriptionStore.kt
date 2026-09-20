@@ -46,6 +46,15 @@ class SubscriptionStore(context: Context) {
     val hasSubscription: Boolean
         get() = !subscriptionUrl.isNullOrBlank()
 
+    /** Stable random per-install id used to bind a trial to this device (not a hardware id). */
+    val deviceId: String
+        get() {
+            prefs.getString(KEY_DEVICE_ID, null)?.let { return it }
+            val id = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString(KEY_DEVICE_ID, id).apply()
+            return id
+        }
+
     fun saveInfo(info: SubscriptionInfo) {
         prefs.edit().apply {
             putString(KEY_TITLE, info.profileTitle)
@@ -79,6 +88,7 @@ class SubscriptionStore(context: Context) {
         private const val KEY_CONFIG = "config_json"
         private const val KEY_LAST_REFRESH = "last_refresh_ms"
         private const val KEY_SELECTED_SERVER = "selected_server"
+        private const val KEY_DEVICE_ID = "device_id"
         private const val KEY_TITLE = "info_title"
         private const val KEY_SUPPORT_URL = "info_support_url"
         private const val KEY_INTERVAL = "info_interval_h"
