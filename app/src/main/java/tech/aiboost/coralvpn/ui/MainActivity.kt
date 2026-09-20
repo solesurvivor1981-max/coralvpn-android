@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         binding.connectButton.setOnClickListener { onConnectToggle() }
         binding.renewButton.setOnClickListener { openBot() }
         binding.botButton.setOnClickListener { openBot() }
+        binding.changeLinkButton.setOnClickListener { onChangeLink() }
         binding.serverText.setOnClickListener { showServerPicker() }
         // Hidden support hook: long-press the logo to share the diagnostic log.
         binding.logo.setOnLongClickListener { shareLog(); true }
@@ -101,6 +102,18 @@ class MainActivity : AppCompatActivity() {
         } ?: return
         binding.linkEditText.setText(url)
         saveAndFetch(url)
+    }
+
+    /** Return to the link-input screen so a wrong subscription can be corrected. */
+    private fun onChangeLink() {
+        if (VpnController.state.value.status != VpnStatus.DISCONNECTED) {
+            ContextCompat.startForegroundService(this, CoralVpnService.disconnectIntent(this))
+        }
+        binding.linkEditText.setText(store.subscriptionUrl ?: "")
+        store.subscriptionUrl = null
+        store.cachedConfig = null
+        store.selectedServer = null
+        render()
     }
 
     private fun onTrial() {

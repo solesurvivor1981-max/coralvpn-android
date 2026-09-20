@@ -26,6 +26,7 @@
     <string name="current_server">Сервер: %1$s</string>
     <string name="choose_server">Выбор сервера</string>
     <string name="open_bot">Telegram-бот</string>
+    <string name="change_link">Сменить ссылку</string>
 
     <string name="notif_channel_name">Статус VPN</string>
     <string name="notif_connected">CoralVPN подключён</string>
