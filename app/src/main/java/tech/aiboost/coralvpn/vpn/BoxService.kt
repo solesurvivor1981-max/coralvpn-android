@@ -29,19 +29,25 @@ class BoxService(
     fun start(configJson: String, onStarted: () -> Unit, onError: (String) -> Unit) {
         scope.launch {
             try {
+                LogStore.log("box: promote/discard drafts")
                 Libbox.promoteOOMDraft()
                 Libbox.discardPowerReportDraft()
 
+                LogStore.log("box: creating CommandServer")
                 val server = CommandServer(this@BoxService, platformInterface)
                 server.start()
                 commandServer = server
+                LogStore.log("box: CommandServer started")
 
                 DefaultNetworkMonitor.start()
+                LogStore.log("box: network monitor started; starting service…")
 
                 server.startOrReloadService(configJson, OverrideOptions())
+                LogStore.log("box: startOrReloadService returned OK")
                 onStarted()
             } catch (e: Exception) {
                 Log.e(TAG, "start failed", e)
+                LogStore.log("box: START FAILED: ${e.message ?: e}")
                 onError(e.message ?: e.toString())
             }
         }
@@ -50,11 +56,16 @@ class BoxService(
     fun stop() {
         scope.launch {
             val server = commandServer ?: return@launch
+            LogStore.log("box: closeService()")
             runCatching { server.closeService() }
-                .onFailure { server.setError("android: close service: ${it.message}") }
+                .onFailure {
+                    LogStore.log("box: closeService error: ${it.message}")
+                    server.setError("android: close service: ${it.message}")
+                }
             runCatching { DefaultNetworkMonitor.stop() }
             runCatching { server.close() }
             commandServer = null
+            LogStore.log("box: stopped")
         }
     }
 
@@ -65,6 +76,7 @@ class BoxService(
     // ---- CommandServerHandler (all seven methods) ----
 
     override fun serviceStop() {
+        LogStore.log("core → serviceStop() (core requested teardown)")
         service.requestStopFromCore()
     }
 
@@ -84,6 +96,7 @@ class BoxService(
 
     override fun writeDebugMessage(message: String?) {
         Log.d("sing-box", message ?: "")
+        if (!message.isNullOrBlank()) LogStore.log("core: $message")
     }
 
     override fun connectSSHAgent(): Int = -1

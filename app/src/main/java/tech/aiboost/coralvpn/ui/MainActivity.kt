@@ -24,6 +24,7 @@ import tech.aiboost.coralvpn.net.ConfigClient
 import tech.aiboost.coralvpn.net.SubscriptionInactiveException
 import tech.aiboost.coralvpn.util.Formats
 import tech.aiboost.coralvpn.vpn.CoralVpnService
+import tech.aiboost.coralvpn.vpn.LogStore
 import tech.aiboost.coralvpn.vpn.VpnController
 import tech.aiboost.coralvpn.vpn.VpnStatus
 
@@ -54,8 +55,11 @@ class MainActivity : AppCompatActivity() {
         binding.saveLinkButton.setOnClickListener { onSaveLink() }
         binding.connectButton.setOnClickListener { onConnectToggle() }
         binding.renewButton.setOnClickListener { openBot() }
+        binding.shareLogButton.setOnClickListener { shareLog() }
+        binding.clearLogButton.setOnClickListener { LogStore.clear() }
 
         observeVpnState()
+        observeLog()
         maybeRequestNotificationPermission()
         handleDeeplink(intent)
         render()
@@ -172,10 +176,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun observeLog() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                LogStore.text.collect { binding.logText.text = it }
+            }
+        }
+    }
+
+    private fun shareLog() {
+        val log = LogStore.snapshot().ifBlank { "(лог пуст)" }
+        val share = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "CoralVPN log")
+            putExtra(Intent.EXTRA_TEXT, log)
+        }
+        startActivity(Intent.createChooser(share, getString(R.string.share_log_via)))
+    }
+
     private fun render() {
         val hasSub = store.hasSubscription
         binding.linkInputGroup.visibility = if (hasSub) android.view.View.GONE else android.view.View.VISIBLE
         binding.connectGroup.visibility = if (hasSub) android.view.View.VISIBLE else android.view.View.GONE
+        binding.diagGroup.visibility = if (hasSub) android.view.View.VISIBLE else android.view.View.GONE
 
         val info = store.loadInfo()
         binding.expiredBanner.visibility = if (hasSub && info.isExpired) android.view.View.VISIBLE else android.view.View.GONE
@@ -200,6 +223,7 @@ class MainActivity : AppCompatActivity() {
         binding.statusText.text = when (state.status) {
             VpnStatus.CONNECTED -> getString(R.string.status_connected)
             VpnStatus.CONNECTING -> getString(R.string.connecting)
+            VpnStatus.ERROR -> "Ошибка: ${state.message ?: "—"}"
             else -> getString(R.string.status_disconnected)
         }
     }

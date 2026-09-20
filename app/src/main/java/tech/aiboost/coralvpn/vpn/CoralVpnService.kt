@@ -62,8 +62,16 @@ class CoralVpnService : VpnService(), PlatformInterface {
                     stopSelf()
                     return START_NOT_STICKY
                 }
+                LogStore.log("service: onStartCommand CONNECT (server=$serverName, cfg=${configJson.length}B)")
                 VpnController.update(VpnState(VpnStatus.CONNECTING, serverName))
-                startForeground(NOTIFICATION_ID, buildNotification(serverName, getString(R.string.connecting)))
+                try {
+                    startForeground(NOTIFICATION_ID, buildNotification(serverName, getString(R.string.connecting)))
+                } catch (e: Exception) {
+                    LogStore.log("service: startForeground FAILED: ${e.message ?: e}")
+                    VpnController.update(VpnState(VpnStatus.ERROR, serverName, "startForeground: ${e.message}"))
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
                 box.start(
                     configJson,
                     onStarted = {
@@ -73,7 +81,7 @@ class CoralVpnService : VpnService(), PlatformInterface {
                     onError = { msg ->
                         Log.e(TAG, "start failed: $msg")
                         VpnController.update(VpnState(VpnStatus.ERROR, serverName, msg))
-                        stopTunnel()
+                        mainHandler.post { stopTunnel() }
                     },
                 )
                 return START_STICKY
@@ -87,15 +95,23 @@ class CoralVpnService : VpnService(), PlatformInterface {
     }
 
     private fun stopTunnel() {
+        LogStore.log("service: stopTunnel()")
         box.stop()
         fileDescriptor?.let { runCatching { it.close() } }
         fileDescriptor = null
-        VpnController.update(VpnState(VpnStatus.DISCONNECTED))
+        val prev = VpnController.state.value
+        // Preserve an error message if we're tearing down because of one.
+        if (prev.status == VpnStatus.ERROR) {
+            VpnController.update(VpnState(VpnStatus.ERROR, prev.serverName, prev.message))
+        } else {
+            VpnController.update(VpnState(VpnStatus.DISCONNECTED))
+        }
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
     override fun onRevoke() {
+        LogStore.log("service: onRevoke() (OS revoked VPN)")
         stopTunnel()
         super.onRevoke()
     }
@@ -112,6 +128,7 @@ class CoralVpnService : VpnService(), PlatformInterface {
 
     override fun openTun(options: TunOptions): Int {
         if (prepare(this) != null) error("android: missing vpn permission")
+        LogStore.log("openTun: mtu=${options.mtu} autoRoute=${options.autoRoute} dnsMode=${runCatching { options.dnsMode.value }.getOrNull()}")
 
         val builder = Builder()
             .setSession("CoralVPN")
@@ -159,6 +176,7 @@ class CoralVpnService : VpnService(), PlatformInterface {
         val pfd = builder.establish()
             ?: error("android: the application is not prepared or is revoked")
         fileDescriptor = pfd
+        LogStore.log("openTun: established fd=${pfd.fd}")
         return pfd.fd
     }
 

@@ -24,4 +24,9 @@
 
     <string name="err_inactive">Подписка не активна. Продлите в боте.</string>
     <string name="err_network">Не удалось получить конфигурацию. Проверьте сеть.</string>
+
+    <string name="diagnostics">Диагностика</string>
+    <string name="share_log">Поделиться логом</string>
+    <string name="clear_log">Очистить</string>
+    <string name="share_log_via">Отправить лог</string>
 </resources>
