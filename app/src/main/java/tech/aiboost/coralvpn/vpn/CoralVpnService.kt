@@ -188,7 +188,7 @@ class CoralVpnService : VpnService(), PlatformInterface {
 
     override fun useProcFS(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
 
-    override fun localDNSTransport(): LocalDNSTransport? = null
+    override fun localDNSTransport(): LocalDNSTransport? = LocalResolver
 
     override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener?) {
         DefaultNetworkMonitor.setListener(listener)
