@@ -12,7 +12,6 @@ import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.NetworkInterfaceIterator
 import io.nekohasekai.libbox.StringIterator
 import io.nekohasekai.libbox.NetworkInterface as LibboxNetworkInterface
-import java.net.Inet6Address
 import java.net.InterfaceAddress
 import java.net.NetworkInterface
 
@@ -100,7 +99,9 @@ object DefaultNetworkMonitor {
                 caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> Libbox.InterfaceTypeEthernet
                 else -> Libbox.InterfaceTypeOther
             }
-            bi.dnsServer = StringArray(lp.dnsServers.mapNotNull { it.hostAddress }.iterator())
+            bi.dnsServer = StringArray(
+                lp.dnsServers.mapNotNull { it.hostAddress?.stripZone() }.iterator(),
+            )
             bi.addresses = StringArray(jIface.interfaceAddresses.map { it.toPrefix() }.iterator())
             var flags = 0
             if (caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
@@ -116,12 +117,12 @@ object DefaultNetworkMonitor {
         return InterfaceArray(result.iterator())
     }
 
+    // sing-box parses these with netip.ParsePrefix, which REJECTS IPv6 zone ids
+    // (e.g. "fe80::...%wlan0/64" panics the core). Strip the "%zone" suffix.
     private fun InterfaceAddress.toPrefix(): String =
-        if (address is Inet6Address) {
-            "${(address as Inet6Address).hostAddress}/$networkPrefixLength"
-        } else {
-            "${address.hostAddress}/$networkPrefixLength"
-        }
+        "${address.hostAddress?.stripZone() ?: ""}/$networkPrefixLength"
+
+    private fun String.stripZone(): String = substringBefore('%')
 
     /** StringIterator implementation for handing string lists into libbox. */
     class StringArray(private val it: Iterator<String>) : StringIterator {
