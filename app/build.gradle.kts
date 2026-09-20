@@ -14,6 +14,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         vectorDrawables { useSupportLibrary = true }
+        // libbox.aar is built arm64-only (see build-libbox.yml); match it.
+        ndk { abiFilters += "arm64-v8a" }
     }
 
     buildTypes {
@@ -35,10 +37,20 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/*.version"
+            excludes += "/META-INF/*.kotlin_module"
+        }
     }
 }
 
 dependencies {
+    // sing-box core (built by build-libbox.yml, fetched into app/libs in CI)
+    implementation(files("libs/libbox.aar"))
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")

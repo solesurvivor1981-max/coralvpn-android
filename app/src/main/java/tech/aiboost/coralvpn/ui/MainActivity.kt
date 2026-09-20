@@ -137,8 +137,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startVpnService() {
+        val configJson = store.cachedConfig
+        if (configJson.isNullOrBlank()) {
+            // No config cached yet — fetch, then the user can tap Connect again.
+            refreshConfig(showToast = true)
+            return
+        }
         val serverName = store.loadInfo().profileTitle
-        ContextCompat.startForegroundService(this, CoralVpnService.connectIntent(this, serverName))
+        ContextCompat.startForegroundService(
+            this,
+            CoralVpnService.connectIntent(this, configJson, serverName),
+        )
     }
 
     private fun observeVpnState() {
