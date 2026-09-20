@@ -25,6 +25,7 @@ import tech.aiboost.coralvpn.net.ConfigParser
 import tech.aiboost.coralvpn.net.NotSingboxConfigException
 import tech.aiboost.coralvpn.net.SubscriptionInactiveException
 import tech.aiboost.coralvpn.net.TrialClient
+import tech.aiboost.coralvpn.net.TrialServerException
 import tech.aiboost.coralvpn.net.TrialUsedException
 import tech.aiboost.coralvpn.util.Formats
 import tech.aiboost.coralvpn.vpn.CoralVpnService
@@ -126,6 +127,8 @@ class MainActivity : AppCompatActivity() {
                 refreshConfig(showToast = true)
             } catch (e: TrialUsedException) {
                 Toast.makeText(this@MainActivity, R.string.trial_used, Toast.LENGTH_LONG).show()
+            } catch (e: TrialServerException) {
+                Toast.makeText(this@MainActivity, R.string.trial_server_error, Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, R.string.err_network, Toast.LENGTH_LONG).show()
             } finally {

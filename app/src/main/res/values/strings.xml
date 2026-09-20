@@ -14,6 +14,7 @@
     <string name="save_link">Сохранить</string>
     <string name="trial_used">Пробный период уже использован. Оформите подписку в боте.</string>
     <string name="trial_loading">Запрашиваю пробный доступ…</string>
+    <string name="trial_server_error">Сервер пробного доступа временно недоступен. Попробуйте позже.</string>
 
     <string name="subscription_expired">Подписка истекла</string>
     <string name="renew_in_bot">Продлить в боте</string>
