@@ -110,8 +110,19 @@ class MainActivity : AppCompatActivity() {
             data.scheme?.startsWith("http") == true -> data.toString()
             else -> null
         } ?: return
+        // Only accept subscription links from our own domain — a deep link is attacker-
+        // controllable and could otherwise point the VPN at a hostile config.
+        if (!isTrustedSubscriptionUrl(url)) {
+            Toast.makeText(this, R.string.err_untrusted_link, Toast.LENGTH_LONG).show()
+            return
+        }
         binding.linkEditText.setText(url)
         saveAndFetch(url)
+    }
+
+    private fun isTrustedSubscriptionUrl(url: String): Boolean {
+        val host = runCatching { Uri.parse(url.trim()).host?.lowercase() }.getOrNull() ?: return false
+        return host == "ai-boost.tech" || host.endsWith(".ai-boost.tech")
     }
 
     /** Return to the link-input screen so a wrong subscription can be corrected. */
