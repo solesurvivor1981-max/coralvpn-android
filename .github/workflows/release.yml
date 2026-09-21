@@ -62,6 +62,8 @@ jobs:
           mkdir -p out
           TAG="${GITHUB_REF_NAME:-dev}"
           cp app/build/outputs/apk/release/*.apk "out/coralvpn-${TAG}.apk"
+          # Stable-name copy so /releases/latest/download/coralvpn-latest.apk always works.
+          cp app/build/outputs/apk/release/*.apk "out/coralvpn-latest.apk"
           ls -la out
 
       - name: Upload artifact
