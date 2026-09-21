@@ -252,5 +252,23 @@
                 android:text="@string/change_link" />
         </LinearLayout>
 
+        <!-- Footer: in-app update + version -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/updateButton"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/versionText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/disconnected"
+            android:textSize="12sp" />
+
     </LinearLayout>
 </ScrollView>

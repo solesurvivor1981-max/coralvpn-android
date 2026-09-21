@@ -43,5 +43,9 @@
     <string name="err_format">Сервер вернул не тот формат (%1$s). Нужна ссылка sing-box из бота.</string>
     <string name="err_untrusted_link">Ссылка не с сервера CoralVPN — отклонено в целях безопасности.</string>
 
+    <string name="version_footer">Версия %1$s</string>
+    <string name="update_available">Обновить до %1$s</string>
+    <string name="update_downloading">Скачиваю обновление…</string>
+
     <string name="share_log_via">Отправить лог</string>
 </resources>

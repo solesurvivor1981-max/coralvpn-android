@@ -28,9 +28,11 @@ import tech.aiboost.coralvpn.net.ConfigParser
 import tech.aiboost.coralvpn.net.NotSingboxConfigException
 import tech.aiboost.coralvpn.net.PairClient
 import tech.aiboost.coralvpn.net.SubscriptionInactiveException
+import tech.aiboost.coralvpn.BuildConfig
 import tech.aiboost.coralvpn.net.TrialClient
 import tech.aiboost.coralvpn.net.TrialServerException
 import tech.aiboost.coralvpn.net.TrialUsedException
+import tech.aiboost.coralvpn.net.UpdateChecker
 import tech.aiboost.coralvpn.util.Formats
 import tech.aiboost.coralvpn.util.QrGen
 import tech.aiboost.coralvpn.vpn.CoralVpnService
@@ -46,7 +48,9 @@ class MainActivity : AppCompatActivity() {
     private val configClient = ConfigClient()
     private val trialClient = TrialClient()
     private val pairClient = PairClient()
+    private val updateChecker = UpdateChecker()
     private var pairJob: Job? = null
+    private var pendingUpdate: UpdateChecker.Update? = null
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* best-effort */ }
@@ -78,10 +82,60 @@ class MainActivity : AppCompatActivity() {
         // Hidden support hook: long-press the logo to share the diagnostic log.
         binding.logo.setOnLongClickListener { shareLog(); true }
 
+        binding.updateButton.setOnClickListener { pendingUpdate?.let { downloadAndInstall(it) } }
+        binding.versionText.text = getString(R.string.version_footer, BuildConfig.VERSION_NAME)
+
         observeVpnState()
         maybeRequestNotificationPermission()
+        checkForUpdate()
         handleDeeplink(intent)
         render()
+    }
+
+    private fun checkForUpdate() {
+        lifecycleScope.launch {
+            val update = withContext(Dispatchers.IO) {
+                runCatching { updateChecker.check(BuildConfig.VERSION_NAME) }.getOrNull()
+            } ?: return@launch
+            pendingUpdate = update
+            binding.updateButton.text = getString(R.string.update_available, update.version)
+            binding.updateButton.visibility = android.view.View.VISIBLE
+        }
+    }
+
+    private fun downloadAndInstall(update: UpdateChecker.Update) {
+        binding.updateButton.isEnabled = false
+        binding.updateButton.text = getString(R.string.update_downloading)
+        lifecycleScope.launch {
+            try {
+                val apk = withContext(Dispatchers.IO) {
+                    val client = okhttp3.OkHttpClient.Builder()
+                        .callTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+                        .build()
+                    val req = okhttp3.Request.Builder()
+                        .url(update.apkUrl).header("User-Agent", ConfigClient.USER_AGENT).build()
+                    client.newCall(req).execute().use { resp ->
+                        if (!resp.isSuccessful) throw java.io.IOException("HTTP ${resp.code}")
+                        val f = java.io.File(cacheDir, "update.apk")
+                        resp.body!!.byteStream().use { input -> f.outputStream().use { input.copyTo(it) } }
+                        f
+                    }
+                }
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    this@MainActivity, "$packageName.fileprovider", apk,
+                )
+                val install = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(install)
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, R.string.err_network, Toast.LENGTH_LONG).show()
+            } finally {
+                binding.updateButton.isEnabled = true
+                pendingUpdate?.let { binding.updateButton.text = getString(R.string.update_available, it.version) }
+            }
+        }
     }
 
     private fun maybeRequestNotificationPermission() {
