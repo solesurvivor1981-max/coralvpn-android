@@ -46,6 +46,7 @@
     <string name="version_footer">Версия %1$s</string>
     <string name="update_available">Обновить до %1$s</string>
     <string name="update_downloading">Скачиваю обновление…</string>
+    <string name="update_allow_install">Разрешите установку приложений из этого источника, затем нажмите «Обновить» снова.</string>
 
     <string name="share_log_via">Отправить лог</string>
 </resources>

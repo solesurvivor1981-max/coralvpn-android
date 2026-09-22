@@ -104,8 +104,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun downloadAndInstall(update: UpdateChecker.Update) {
+        // Android 8+: installing an APK needs the "install unknown apps" permission for us.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+            LogStore.log("update: no install permission → opening settings")
+            Toast.makeText(this, R.string.update_allow_install, Toast.LENGTH_LONG).show()
+            runCatching {
+                startActivity(
+                    Intent(
+                        android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:$packageName"),
+                    ),
+                )
+            }
+            return
+        }
         binding.updateButton.isEnabled = false
         binding.updateButton.text = getString(R.string.update_downloading)
+        LogStore.log("update: downloading ${update.version} from ${update.apkUrl}")
         lifecycleScope.launch {
             try {
                 val apk = withContext(Dispatchers.IO) {
@@ -121,6 +136,7 @@ class MainActivity : AppCompatActivity() {
                         f
                     }
                 }
+                LogStore.log("update: downloaded ${apk.length()} B, launching installer")
                 val uri = androidx.core.content.FileProvider.getUriForFile(
                     this@MainActivity, "$packageName.fileprovider", apk,
                 )
@@ -130,7 +146,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 startActivity(install)
             } catch (e: Exception) {
-                Toast.makeText(this@MainActivity, R.string.err_network, Toast.LENGTH_LONG).show()
+                LogStore.log("update: FAILED: ${e.message ?: e}")
+                Toast.makeText(this@MainActivity, "Обновление не удалось: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 binding.updateButton.isEnabled = true
                 pendingUpdate?.let { binding.updateButton.text = getString(R.string.update_available, it.version) }
