@@ -359,7 +359,7 @@ class MainActivity : AppCompatActivity() {
         val log = LogStore.snapshot().ifBlank { "(лог пуст)" }
         val share = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "CoralVPN log")
+            putExtra(Intent.EXTRA_SUBJECT, "AI Boost Tech log")
             putExtra(Intent.EXTRA_TEXT, log)
         }
         startActivity(Intent.createChooser(share, getString(R.string.share_log_via)))

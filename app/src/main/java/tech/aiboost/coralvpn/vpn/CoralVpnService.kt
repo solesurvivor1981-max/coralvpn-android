@@ -133,7 +133,7 @@ class CoralVpnService : VpnService(), PlatformInterface {
         LogStore.log("openTun: mtu=${options.mtu} autoRoute=${options.autoRoute} dnsMode=${runCatching { options.dnsMode.value }.getOrNull()}")
 
         val builder = Builder()
-            .setSession("CoralVPN")
+            .setSession("AI Boost Tech")
             .setMtu(options.mtu)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) builder.setMetered(false)
