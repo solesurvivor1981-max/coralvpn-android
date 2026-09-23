@@ -72,6 +72,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.trialButton.setOnClickListener { onTrial() }
         binding.pairButton.setOnClickListener { startPairing() }
+        binding.pairRefreshButton.setOnClickListener { startPairing() }
         binding.pairCancelButton.setOnClickListener { cancelPairing() }
         binding.saveLinkButton.setOnClickListener { onSaveLink() }
         binding.connectButton.setOnClickListener { onConnectToggle() }
@@ -225,27 +226,37 @@ class MainActivity : AppCompatActivity() {
                 }
                 val qr = withContext(Dispatchers.Default) { QrGen.bitmap(session.deepLink, 600) }
                 binding.qrImage.setImageBitmap(qr)
-                // Short-code entry in the bot isn't wired yet (server deviation #2) — hide it for now.
-                binding.pairCode.text = ""
+                binding.pairCode.text = session.code?.let { getString(R.string.pair_code_label, it) } ?: ""
 
+                // Tick every second (live countdown), poll status every pollInterval seconds.
                 val deadline = System.currentTimeMillis() + session.expiresInSec * 1000L
-                while (isActive && System.currentTimeMillis() < deadline) {
-                    delay(session.pollIntervalSec.coerceAtLeast(1) * 1000L)
-                    val st = withContext(Dispatchers.IO) {
-                        runCatching { pairClient.status(session.token) }.getOrNull()
-                    }
-                    when (st) {
-                        is PairClient.Status.Ready -> {
-                            store.subscriptionUrl = st.subUrl
-                            binding.pairGroup.visibility = android.view.View.GONE
-                            refreshConfig(showToast = true)
-                            return@launch
+                val pollEvery = session.pollIntervalSec.coerceAtLeast(1)
+                var tick = 0L
+                while (isActive) {
+                    val remainMs = deadline - System.currentTimeMillis()
+                    if (remainMs <= 0) break
+                    val secs = remainMs / 1000
+                    val mmss = String.format("%d:%02d", secs / 60, secs % 60)
+                    binding.pairStatus.text = getString(R.string.pair_waiting_countdown, mmss)
+                    delay(1000)
+                    tick++
+                    if (tick % pollEvery == 0L) {
+                        val st = withContext(Dispatchers.IO) {
+                            runCatching { pairClient.status(session.token) }.getOrNull()
                         }
-                        PairClient.Status.Expired -> {
-                            binding.pairStatus.setText(R.string.pair_expired)
-                            return@launch
+                        when (st) {
+                            is PairClient.Status.Ready -> {
+                                store.subscriptionUrl = st.subUrl
+                                binding.pairGroup.visibility = android.view.View.GONE
+                                refreshConfig(showToast = true)
+                                return@launch
+                            }
+                            PairClient.Status.Expired -> {
+                                binding.pairStatus.setText(R.string.pair_expired)
+                                return@launch
+                            }
+                            else -> { /* pending — keep polling */ }
                         }
-                        else -> { /* pending — keep polling */ }
                     }
                 }
                 if (isActive) binding.pairStatus.setText(R.string.pair_expired)

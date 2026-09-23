@@ -34,7 +34,9 @@
     <string name="pair_title">Привязка устройства</string>
     <string name="pair_hint">Отсканируйте QR-код камерой телефона — откроется наш бот и привяжет это устройство к вашей подписке.</string>
     <string name="pair_waiting">Ожидание подтверждения…</string>
-    <string name="pair_expired">Код истёк. Обновите.</string>
+    <string name="pair_waiting_countdown">Ожидание подтверждения… код действует ещё %1$s</string>
+    <string name="pair_code_label">Код: %1$s</string>
+    <string name="pair_expired">Код истёк. Нажмите «Обновить код».</string>
     <string name="pair_refresh">Обновить код</string>
 
     <string name="notif_channel_name">Статус VPN</string>

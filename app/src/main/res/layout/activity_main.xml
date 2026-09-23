@@ -158,28 +158,43 @@
                 android:id="@+id/pairCode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:textColor="@color/on_bg"
-                android:textSize="16sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
+                android:letterSpacing="0.15"
                 android:fontFamily="monospace" />
 
             <TextView
                 android:id="@+id/pairStatus"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:gravity="center"
                 android:text="@string/pair_waiting"
                 android:textColor="@color/disconnected"
                 android:textSize="14sp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/pairCancelButton"
-                style="@style/Widget.Material3.Button.TextButton"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@android:string/cancel" />
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pairRefreshButton"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pair_refresh" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pairCancelButton"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@android:string/cancel" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Connect area -->

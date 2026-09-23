@@ -11,8 +11,8 @@ android {
         applicationId = "tech.aiboost.coralvpn"
         minSdk = 24
         targetSdk = 34
-        versionCode = 8
-        versionName = "0.1.8"
+        versionCode = 9
+        versionName = "0.1.9"
         vectorDrawables { useSupportLibrary = true }
         // libbox.aar ships arm64-v8a + armeabi-v7a (universal; TV boxes are often 32-bit).
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
