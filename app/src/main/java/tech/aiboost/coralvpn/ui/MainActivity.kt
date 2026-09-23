@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity() {
         binding.connectButton.setOnClickListener { onConnectToggle() }
         binding.renewButton.setOnClickListener { openBot() }
         binding.botButton.setOnClickListener { openBot() }
+        binding.botMaxButton.setOnClickListener { openMaxBot() }
         binding.changeLinkButton.setOnClickListener { onChangeLink() }
         binding.serverText.setOnClickListener { showServerPicker() }
         // Hidden support hook: long-press the logo to share the diagnostic log.
@@ -459,6 +460,14 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(support)))
         } catch (_: Exception) {
             // no browser/telegram installed — ignore
+        }
+    }
+
+    private fun openMaxBot() {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://max.ru/id332134235661_3_bot")))
+        } catch (_: Exception) {
+            // no browser/MAX app installed — ignore
         }
     }
 }

@@ -27,6 +27,7 @@
     <string name="current_server">Сервер: %1$s</string>
     <string name="choose_server">Выбор сервера</string>
     <string name="open_bot">Telegram-бот</string>
+    <string name="open_bot_max">Бот в MAX</string>
     <string name="change_link">Сменить ссылку</string>
     <string name="pair_device">Привязать по QR (ТВ / 2-й телефон)</string>
     <string name="pair_title">Привязка устройства</string>
