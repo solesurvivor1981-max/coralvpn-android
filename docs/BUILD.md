@@ -11,7 +11,7 @@
 | `.github/workflows/release.yml` | тег `v*` / вручную | **подписанный** release APK → прикладывает к GitHub Release |
 | `.github/workflows/gen-keystore.yml` | вручную (однократно) | генерит постоянный keystore подписи (см. «Подпись») |
 | `.github/workflows/build-libbox.yml` | вручную | полное ядро (все протоколы) через `build_libbox`, 4 ABI |
-| `.github/workflows/build-libbox-slim.yml` | вручную | **slim hy2-only** ядро (только нужные теги), arm64, stripped |
+| `.github/workflows/build-libbox-slim.yml` | вручную | **slim** ядро (нужные теги: hy2 + vless/reality), arm64, stripped |
 
 Текущий релиз ядра, который качает CI: **`libbox-v1.14.1`** (стабильная sing-box 1.14.1 —
 совпадает с версией, под которую сервер валидирует конфиг). Не alpha.
@@ -42,9 +42,11 @@ sing-box собирается в нативную `libbox.aar` (Go → gomobile 
 2. `android.yml` скачивает этот asset в `app/libs/` перед Gradle — обычная сборка
    приложения занимает ~1.5 мин и не трогает Go.
 
-### Slim-сборка (текущая, hy2-only)
+### Slim-сборка (текущая)
 
-По спеке прод — только Hysteria2, поэтому ядро собирается с минимумом тегов:
+Ядро собирается с минимумом ОПЦИОНАЛЬНЫХ тегов. Важно: базовые протоколы sing-box
+(**VLESS, VMess, Trojan, Shadowsocks**, socks/http/direct) компилируются ВСЕГДА — они не за тегом.
+Теги гейтят лишь доп-фичи, поэтому slim-ядро умеет и Hysteria2, и VLESS(+REALITY):
 
 ```
 gomobile bind -target android/arm64 -androidapi 24 \
@@ -54,7 +56,9 @@ gomobile bind -target android/arm64 -androidapi 24 \
   -o libbox.aar ./experimental/libbox
 ```
 
-- `with_quic` — Hysteria2 (QUIC). `with_gvisor` — tun-стек. `with_utls` — TLS-фингерпринт.
+- `with_quic` — Hysteria2/TUIC (QUIC). `with_gvisor` — tun-стек. `with_utls` — uTLS/REALITY (нужен
+  для VLESS-REALITY и TLS-фингерпринта). VLESS/VMess/Trojan/SS — базовые, тега не требуют.
+- Выпилено (нет тегов): WireGuard, gRPC-транспорт, ECH, DHCP, Clash/V2Ray API, ACME, REALITY-сервер.
 - `badlinkname,tfogo_checklinkname0` **+** `-ldflags -checklinkname=0` — обязательны,
   иначе Go 1.26 падает на `invalid reference to os.checkPidfdOnce`.
 - `-s -w` — strip символов.

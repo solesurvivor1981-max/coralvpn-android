@@ -25,7 +25,11 @@ Android-клиент CoralVPN. Форк SFA (sing-box-for-android) с уреза
 - **Клиент НЕ парсит подписку и НЕ мутирует конфиг.** Скачал JSON с `?fmt=singbox`
   → отдал в libbox как есть. Вся «умная» логика (выбор серверов, обход блокировок)
   живёт на сервере.
-- Один протокол — Hysteria2. Не тащим поддержку остальных протоколов из SFA.
+- Протоколы: **Hysteria2 + VLESS (+REALITY)**. VLESS/VMess/Trojan/Shadowsocks — БАЗОВЫЕ
+  протоколы sing-box, компилируются всегда (без тега); slim-сборка добавляет только опциональное:
+  `with_quic`=Hysteria2, `with_utls`=uTLS/REALITY, `with_gvisor`=tun (см. docs/BUILD.md). Прод
+  раздаёт узлы и hy2, и vless (напр. `ru-spb-443-vless`), автовыбор берёт рабочий. Клиент их НЕ
+  реализует — просто исполняет конфиг сервера.
 - Смена/добавление серверов — правкой на сервере, без релиза приложения.
 - Секреты (sub_url/UUID) — в EncryptedSharedPreferences; не логировать в systemd/logcat.
 

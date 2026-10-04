@@ -7,7 +7,7 @@
 - **База:** форк [sing-box-for-android (SFA)](https://github.com/SagerNet/sing-box-for-android) с урезанным UI (GPL-3.0).
 - **Конфиг:** приходит готовым с нашего sub-сервера (`?fmt=singbox`) — клиент его не парсит, отдаёт в libbox как есть.
 - **Дистрибуция:** APK на GitHub Releases (вне сторов). Сборка — GitHub Actions.
-- **Протокол:** только Hysteria2 (весь прод CoralVPN — hy2-only).
+- **Протоколы:** Hysteria2 и VLESS (+REALITY). Ядро sing-box несёт VLESS/VMess/Trojan/SS как базовые (компилируются без тега); slim-сборка добавляет QUIC (Hysteria2), uTLS/REALITY и tun. Прод отдаёт узлы hy2 и vless, автовыбор берёт рабочий. Клиент протоколы не реализует — исполняет готовый конфиг сервера.
 
 ## Документы
 
